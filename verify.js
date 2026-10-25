@@ -4,6 +4,7 @@ const TokenExpiredError = require('./lib/TokenExpiredError');
 const decode = require('./decode');
 const timespan = require('./lib/timespan');
 const validateAsymmetricKey = require('./lib/validateAsymmetricKey');
+const validateVerifyOptions = require('./lib/validateVerifyOptions');
 const PS_SUPPORTED = require('./lib/psSupported');
 const jws = require('jws');
 const {KeyObject, createSecretKey, createPublicKey} = require("crypto");
@@ -12,11 +13,6 @@ const PUB_KEY_ALGS = ['RS256', 'RS384', 'RS512'];
 const EC_KEY_ALGS = ['ES256', 'ES384', 'ES512'];
 const RSA_KEY_ALGS = ['RS256', 'RS384', 'RS512'];
 const HS_ALGS = ['HS256', 'HS384', 'HS512'];
-
-const ALLOWED_OPTIONS = [
-  'algorithms', 'audience', 'issuer', 'subject', 'jwtid', 'complete', 'ignoreExpiration',
-  'ignoreNotBefore', 'clockTolerance', 'maxAge', 'nonce', 'clockTimestamp', 'allowInvalidAsymmetricKeyTypes'
-];
 
 if (PS_SUPPORTED) {
   PUB_KEY_ALGS.splice(PUB_KEY_ALGS.length, 0, 'PS256', 'PS384', 'PS512');
@@ -47,33 +43,9 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
     };
   }
 
-  const unknownOption = Object.keys(options).find((key) => ALLOWED_OPTIONS.indexOf(key) === -1);
-  if (unknownOption !== undefined) {
-    return done(new JsonWebTokenError('"' + unknownOption + '" is not an allowed option'));
-  }
-
-  if (options.clockTimestamp && typeof options.clockTimestamp !== 'number') {
-    return done(new JsonWebTokenError('clockTimestamp must be a number'));
-  }
-
-  if (options.clockTolerance !== undefined && !Number.isFinite(options.clockTolerance)) {
-    return done(new JsonWebTokenError('clockTolerance must be a finite number'));
-  }
-
-  if (options.ignoreExpiration !== undefined && typeof options.ignoreExpiration !== 'boolean') {
-    return done(new JsonWebTokenError('ignoreExpiration must be a boolean'));
-  }
-
-  if (options.ignoreNotBefore !== undefined && typeof options.ignoreNotBefore !== 'boolean') {
-    return done(new JsonWebTokenError('ignoreNotBefore must be a boolean'));
-  }
-
-  if (options.nonce !== undefined && (typeof options.nonce !== 'string' || options.nonce.trim() === '')) {
-    return done(new JsonWebTokenError('nonce must be a non-empty string'));
-  }
-
-  if (options.allowInvalidAsymmetricKeyTypes !== undefined && typeof options.allowInvalidAsymmetricKeyTypes !== 'boolean') {
-    return done(new JsonWebTokenError('allowInvalidAsymmetricKeyTypes must be a boolean'));
+  const optionsError = validateVerifyOptions(options);
+  if (optionsError) {
+    return done(optionsError);
   }
 
   const clockTimestamp = options.clockTimestamp || Math.floor(Date.now() / 1000);
