@@ -46,9 +46,17 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
     return done(new JsonWebTokenError('clockTimestamp must be a number'));
   }
 
-     if (options.clockTolerance !== undefined && !Number.isFinite(options.clockTolerance)) {
-     return done(new JsonWebTokenError('clockTolerance must be a finite number'));
-   }
+  if (options.clockTolerance !== undefined && !Number.isFinite(options.clockTolerance)) {
+    return done(new JsonWebTokenError('clockTolerance must be a finite number'));
+  }
+
+  if (options.ignoreExpiration !== undefined && typeof options.ignoreExpiration !== 'boolean') {
+    return done(new JsonWebTokenError('ignoreExpiration must be a boolean'));
+  }
+
+  if (options.ignoreNotBefore !== undefined && typeof options.ignoreNotBefore !== 'boolean') {
+    return done(new JsonWebTokenError('ignoreNotBefore must be a boolean'));
+  }
 
   if (options.nonce !== undefined && (typeof options.nonce !== 'string' || options.nonce.trim() === '')) {
     return done(new JsonWebTokenError('nonce must be a non-empty string'));
