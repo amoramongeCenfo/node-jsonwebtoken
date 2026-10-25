@@ -13,6 +13,11 @@ const EC_KEY_ALGS = ['ES256', 'ES384', 'ES512'];
 const RSA_KEY_ALGS = ['RS256', 'RS384', 'RS512'];
 const HS_ALGS = ['HS256', 'HS384', 'HS512'];
 
+const ALLOWED_OPTIONS = [
+  'algorithms', 'audience', 'issuer', 'subject', 'jwtid', 'complete', 'ignoreExpiration',
+  'ignoreNotBefore', 'clockTolerance', 'maxAge', 'nonce', 'clockTimestamp', 'allowInvalidAsymmetricKeyTypes'
+];
+
 if (PS_SUPPORTED) {
   PUB_KEY_ALGS.splice(PUB_KEY_ALGS.length, 0, 'PS256', 'PS384', 'PS512');
   RSA_KEY_ALGS.splice(RSA_KEY_ALGS.length, 0, 'PS256', 'PS384', 'PS512');
@@ -40,6 +45,11 @@ module.exports = function (jwtString, secretOrPublicKey, options, callback) {
       if (err) throw err;
       return data;
     };
+  }
+
+  const unknownOption = Object.keys(options).find((key) => ALLOWED_OPTIONS.indexOf(key) === -1);
+  if (unknownOption !== undefined) {
+    return done(new JsonWebTokenError('"' + unknownOption + '" is not an allowed option'));
   }
 
   if (options.clockTimestamp && typeof options.clockTimestamp !== 'number') {
